@@ -517,63 +517,85 @@ body {
 
 /* three doors */
 .about-doors {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  height: calc(100vh - 56px - 50px - 90px); /* minus nav, inner-tab, header */
+  display: flex;
+  flex-direction: row;
+  gap: 0.8rem;
+  height: 320px;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
 }
 .door {
   position: relative; overflow: hidden;
-  background: #111; cursor: pointer;
-  border-right: 1px solid #222;
+  flex: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: flex 0.4s ease;
 }
+.door:hover { flex: 1.35; }
 .door:last-child { border-right: none; }
+/* 各卡片独立配色 */
+.door:nth-child(1) { background: #111111; } /* 摄影 · 近黑+米白 */
+.door:nth-child(2) { background: #1E1118; } /* 舞蹈 · 深茄紫+淡粉 */
+.door:nth-child(3) { background: #0F1318; } /* 旅行 · 深墨蓝+淡蓝灰 */
+/* 大字 */
 .door-bg {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9rem; opacity: 0.06;
-  transition: opacity 0.5s, transform 0.6s;
-  transform: scale(1);
+  position: absolute;
+  font-family: 'Bodoni Moda', serif;
+  font-weight: 900; font-style: italic;
+  font-size: 3.2rem; line-height: 0.9;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -120%);
+  white-space: nowrap;
   user-select: none;
+  z-index: 1; opacity: 0.88;
 }
-.door:hover .door-bg { opacity: 0.12; transform: scale(1.08); }
+.door:nth-child(1) .door-bg { color: #E8E0D5; }
+.door:nth-child(2) .door-bg { color: #D4A5A5; }
+.door:nth-child(3) .door-bg { color: #A8B8C4; }
+/* 文字信息居中 */
 .door-overlay {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  justify-content: flex-end;
-  padding: 2.5rem;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, 30%);
+  z-index: 3;
+  text-align: center;
+  width: 90%;
 }
 .door-en {
-  font-size: 0.65rem;
-  letter-spacing: 0.25em;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
 }
+.door:nth-child(1) .door-en { color: rgba(232,224,213,0.45); }
+.door:nth-child(2) .door-en { color: rgba(212,165,165,0.45); }
+.door:nth-child(3) .door-en { color: rgba(168,184,196,0.45); }
 .door-title {
   font-family: var(--serif);
-  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
-  font-weight: 400;
-  color: #fff;
-  line-height: 1.4;
-  transition: transform 0.4s;
+  font-size: clamp(0.78rem, 1.2vw, 0.95rem);
+  font-weight: 300; font-style: italic;
+  line-height: 1.65;
 }
-.door:hover .door-title { transform: translateY(-4px); }
+.door:nth-child(1) .door-title { color: rgba(232,224,213,0.82); }
+.door:nth-child(2) .door-title { color: rgba(212,165,165,0.82); }
+.door:nth-child(3) .door-title { color: rgba(168,184,196,0.82); }
+/* CTA */
 .door-cta {
-  display: flex; align-items: center; gap: 0.8rem;
-  margin-top: 1rem;
-  font-size: 0.65rem;
-  letter-spacing: 0.14em;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  margin-top: 0.9rem;
+  font-size: 0.55rem; letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.5);
-  opacity: 0;
-  transform: translateY(6px);
+  padding: 0.28rem 0.8rem;
+  border: 1px solid;
+  border-radius: 20px;
+  opacity: 0; transform: translateY(-4px);
   transition: opacity 0.3s, transform 0.3s;
 }
 .door:hover .door-cta { opacity: 1; transform: translateY(0); }
-.cta-line {
-  display: inline-block; width: 28px; height: 1px;
-  background: rgba(255,255,255,0.4);
-}
+.door:nth-child(1) .door-cta { color: rgba(232,224,213,0.7); border-color: rgba(232,224,213,0.25); }
+.door:nth-child(2) .door-cta { color: #D4A5A5; border-color: rgba(212,165,165,0.35); }
+.door:nth-child(3) .door-cta { color: #A8B8C4; border-color: rgba(168,184,196,0.3); }
+.cta-line { display: none; }
 
 /* detail panels inside life tab */
 .life-detail {
@@ -695,6 +717,13 @@ body {
 }
 .photo-slot.wide { grid-column: span 1; aspect-ratio: 3/2; }
 .photo-slot-icon { font-size: 1.5rem; opacity: 0.35; }
+/* 瀑布流 */
+.masonry { columns: 2; column-gap: 0.8rem; margin-top: 1.2rem; }
+.masonry-item { break-inside: avoid; margin-bottom: 1.4rem; cursor: zoom-in; }
+.masonry-item img { width: 100%; display: block; border-radius: 4px; transition: opacity 0.2s; }
+.masonry-item img:hover { opacity: 0.88; }
+.masonry-label { margin-top: 0.5rem; display: inline-block; background: rgba(168,184,196,0.18); border: 1px solid rgba(168,184,196,0.4); padding: 0.28rem 0.75rem; border-radius: 20px; font-size: 0.68rem; color: #2E3A42; letter-spacing: 0.04em; line-height: 1.6; }
+
 .photo-caption {
   font-size: 0.82rem; color: var(--muted);
   line-height: 1.9; font-style: italic;
@@ -1006,27 +1035,27 @@ body {
         <!-- three doors -->
         <div class="about-doors">
           <div class="door" onclick="openLife('photography')">
-            <div class="door-bg">📷</div>
+            <div class="door-bg">PHOTO</div>
             <div class="door-overlay">
-              <div class="door-en">Photography</div>
-              <div class="door-title">用镜头，用心<br>去感知这个世界。</div>
-              <div class="door-cta"><span class="cta-line"></span>See More</div>
+              <div class="door-en">Photography · 摄影</div>
+              <div class="door-title">用镜头，用心，去感知这个世界。</div>
+              <div class="door-cta">Explore ↗</div>
             </div>
           </div>
           <div class="door" onclick="openLife('dance')">
-            <div class="door-bg">💃</div>
+            <div class="door-bg">DANCE</div>
             <div class="door-overlay">
-              <div class="door-en">Dance</div>
-              <div class="door-title">如果你也能体会<br>舞台灯光亮起的刹那心跳。</div>
-              <div class="door-cta"><span class="cta-line"></span>See More</div>
+              <div class="door-en">Dance · 舞蹈</div>
+              <div class="door-title">如果你也能体会，舞台灯光亮起的刹那心跳。</div>
+              <div class="door-cta">Explore ↗</div>
             </div>
           </div>
           <div class="door" onclick="openLife('travel')">
-            <div class="door-bg">✈️</div>
+            <div class="door-bg">TRAVEL</div>
             <div class="door-overlay">
-              <div class="door-en">Travel</div>
-              <div class="door-title">命运所有的雨季<br>都是为了回到最初的洋流。</div>
-              <div class="door-cta"><span class="cta-line"></span>See More</div>
+              <div class="door-en">Travel · 旅行</div>
+              <div class="door-title">命运所有的雨季，都是为了回到最初的洋流。</div>
+              <div class="door-cta">Explore ↗</div>
             </div>
           </div>
         </div>
@@ -1073,14 +1102,11 @@ body {
   <div class="detail-body-wrap">
     <div class="detail-body-title">如果你也能体会<br>舞台灯光亮起的刹那心跳。</div>
     <div class="detail-body-sub">舞台上的我，是平时藏起来的那部分。</div>
-    <div class="photo-grid-2" style="margin-bottom:1.2rem;">
-      <div class="photo-slot wide" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_2594.JPG" alt="舞蹈" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%941.JPG" alt="路演1" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-    </div>
-    <div class="photo-grid-3">
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%942.JPG" alt="路演2" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%943.JPG" alt="路演3" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-      <div class="photo-slot"><span class="photo-slot-icon">🎭</span><span>Stage photo</span></div>
+    <div class="masonry">
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_2594.JPG" alt="舞蹈"></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%941.JPG" alt="路演1"></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%942.JPG" alt="路演2"></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%943.JPG" alt="路演3"></div>
     </div>
     <p class="photo-caption" style="margin-top:1.5rem;">Dance til the end.</p>
   </div>
@@ -1117,15 +1143,22 @@ body {
       <span class="place-tag visited">🇮🇸 冰岛 </span>
       <span class="place-tag visited">🇩🇰 丹麦 · 哥本哈根</span>
     </div>
-    <div class="photo-grid-3">
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_4759.JPG" alt="意大利" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF.JPG" alt="威尼斯" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF3.JPG" alt="威尼斯3" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-    </div>
-    <div class="photo-grid-3" style="margin-top:0.8rem;">
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF4.JPG" alt="威尼斯4" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%8C%88%E7%89%99%E5%88%A9.JPG" alt="匈牙利" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
-      <div class="photo-slot" style="padding:0;overflow:hidden;"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%8C%88%E7%89%99%E5%88%A92.JPG" alt="匈牙利2" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+    <div class="masonry">
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_4759.JPG" alt="意大利罗马"><div class="masonry-label">🇮🇹 意大利 · 罗马 · 2024.09</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E7%B1%B3%E5%85%B0.JPG" alt="米兰"><div class="masonry-label">🇮🇹 意大利 · 米兰 · 2025.01</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF.JPG" alt="威尼斯"><div class="masonry-label">🇮🇹 意大利 · 威尼斯 · 2025.04</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF3.JPG" alt="威尼斯3"><div class="masonry-label">🇮🇹 意大利 · 威尼斯 · 2025.04</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF4.JPG" alt="威尼斯4"><div class="masonry-label">🇮🇹 意大利 · 威尼斯 · 2025.04</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%99.JPG" alt="西班牙"><div class="masonry-label">🇪🇸 西班牙 · 2024.11</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%991.jpg" alt="西班牙1"><div class="masonry-label">🇪🇸 西班牙 · 2024.11</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%992.jpg" alt="西班牙2"><div class="masonry-label">🇪🇸 西班牙 · 2024.11</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%8C%88%E7%89%99%E5%88%A9.JPG" alt="匈牙利"><div class="masonry-label">🇭🇺 匈牙利 · 布达佩斯 · 2024.11</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%8C%88%E7%89%99%E5%88%A92.JPG" alt="匈牙利2"><div class="masonry-label">🇭🇺 匈牙利 · 布达佩斯 · 2024.11</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_4546.JPG" alt="日本"><div class="masonry-label">🇯🇵 日本 · 2024.07</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E4%B8%AD%E7%8E%AF.JPG" alt="香港中环"><div class="masonry-label">🇭🇰 香港 · 中环 · 2024.01</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E5%85%B0%E6%A1%82%E5%9D%8A.JPG" alt="香港兰桂坊"><div class="masonry-label">🇭🇰 香港 · 兰桂坊 · 2024.01</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E5%9D%9A%E5%B0%BC%E5%9C%B0%E5%9F%8E.JPG" alt="香港坚尼地城"><div class="masonry-label">🇭🇰 香港 · 坚尼地城 · 2024.01</div></div>
+      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%991.JPG" alt="香港1"><div class="masonry-label">🇭🇰 香港 · 2024.01</div></div>
     </div>
     <p class="photo-caption" style="margin-top:1.5rem;">在行走中发现自己。</p>
   </div>
@@ -1256,6 +1289,20 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') selectPhoto((currentPhoto + 1) % PHOTOS.length);
   if (e.key === 'ArrowLeft')  selectPhoto((currentPhoto - 1 + PHOTOS.length) % PHOTOS.length);
   if (e.key === 'Escape') closeLife('photography');
+});
+</script>
+<div id="lightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="lightbox-img" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px;">
+</div>
+<script>
+document.querySelectorAll('.masonry-item img').forEach(img => {
+  img.style.cursor = 'zoom-in';
+  img.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const lb = document.getElementById('lightbox');
+    document.getElementById('lightbox-img').src = this.src;
+    lb.style.display = 'flex';
+  });
 });
 </script>
 </body>
