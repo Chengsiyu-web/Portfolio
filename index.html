@@ -27,7 +27,7 @@ html { font-size:16px; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--sans);
+  font-family: var(--zh);
   font-weight: 300;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
@@ -80,20 +80,77 @@ body {
    SCROLL CONTAINER — vertical
 ══════════════════════════════ */
 .scroll-wrap {
-  height: 100vh;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
+  position: relative;
 }
 .scroll-wrap::-webkit-scrollbar { display: none; }
 
-/* each full-height section */
+/* each full-height section — 全部叠在同一位置，用 opacity+visibility 控制显隐 */
 .screen {
+  position: fixed;
+  inset: 0;
   height: 100vh;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-  position: relative;
-  flex-shrink: 0;
+  z-index: 1;   /* nav z-index:300 在上方 */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: opacity, transform;
+  transform: translateY(0);
+  transition: opacity 0.42s cubic-bezier(0.16,1,0.3,1),
+              transform 0.42s cubic-bezier(0.16,1,0.3,1),
+              visibility 0s linear 0.42s;
+}
+
+/* 下一页按钮 */
+.screen-next-btn {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  z-index: 10;
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  animation: nextBtnFloat 2.4s ease-in-out infinite;
+}
+.screen-next-btn:hover { opacity: 1; }
+@keyframes nextBtnFloat {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(5px); }
+}
+/* inline 变体（About 底部按钮，position:static） */
+.screen-next-btn--inline {
+  position: static;
+  transform: none;
+  animation: nextBtnFloatInline 2.4s ease-in-out infinite;
+}
+@keyframes nextBtnFloatInline {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(5px); }
+}
+.screen-next-btn-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 400;
+}
+.screen-next-btn-line {
+  width: 1px;
+  height: 32px;
+  background: linear-gradient(to bottom, var(--pink-deep), transparent);
+  animation: nextLineAnim 2.4s ease-in-out infinite;
+}
+@keyframes nextLineAnim {
+  0%,100% { opacity: 0.5; transform: scaleY(0.8) translateY(-3px); }
+  50%      { opacity: 1;   transform: scaleY(1)   translateY(0); }
 }
 
 /* ══════════════════════════════
@@ -209,8 +266,9 @@ body {
 ══════════════════════════════ */
 #screen-about {
   display: grid;
-  grid-template-columns: 36% 1fr;
+  grid-template-columns: 26% 1fr;
   padding-top: 56px;
+  overflow: hidden;
 }
 
 /* LEFT photo */
@@ -236,9 +294,11 @@ body {
 /* RIGHT resume */
 .about-resume {
   display: flex; flex-direction: column;
-  padding: 3rem 3.5rem;
+  padding: 2.2rem 3rem 2.2rem;
   overflow-y: auto;
   height: 100%;
+  /* 内部滚动到底才允许切换下一页 */
+  overscroll-behavior: contain;
 }
 .about-resume::-webkit-scrollbar { width: 4px; }
 .about-resume::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
@@ -246,13 +306,17 @@ body {
 /* top row: name left + info right */
 .resume-top {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-bottom: 1.8rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 1.4rem;
   border-bottom: 1px solid var(--divider);
-  margin-bottom: 1.6rem;
+  margin-bottom: 1.4rem;
 }
-.resume-name-block {}
+.resume-name-block {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
 .resume-name-zh {
   font-family: var(--serif);
   font-size: clamp(2rem, 3vw, 2.8rem);
@@ -260,47 +324,60 @@ body {
   color: var(--text);
   line-height: 1;
   letter-spacing: -0.01em;
-  margin-bottom: 0.3rem;
 }
 .resume-name-en {
-  font-size: 0.72rem;
-  color: var(--light);
-  letter-spacing: 0.14em;
+  font-size: 0.82rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  padding-left: 0.9rem;
+  border-left: 1px solid var(--pink);
 }
-.resume-info-block {
-  text-align: right;
-  display: flex; flex-direction: column; gap: 0.25rem;
+/* new header meta block */
+.resume-header-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
 }
-.resume-info-line {
+.resume-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.resume-meta-item {
   font-family: var(--zh);
+  font-size: 0.84rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.resume-meta-sep {
+  color: var(--pink);
+  font-size: 0.85rem;
+  user-select: none;
+}
+.resume-meta-contact .resume-meta-item {
   font-size: 0.78rem;
   color: var(--muted);
-  line-height: 1.7;
-}
-.resume-contact {
-  font-size: 0.72rem;
-  color: var(--light);
 }
 
 /* slogan */
 .resume-slogan {
   font-family: var(--serif);
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
   font-style: italic;
   color: var(--muted);
   line-height: 1.65;
   border-left: 2px solid var(--pink);
   padding-left: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.2rem;
 }
 
-/* resume body grid */
+/* resume body: single column */
 .resume-body {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr 0.85fr;
-  align-items: start;
-  gap: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
   flex: 1;
 }
 
@@ -316,7 +393,7 @@ body {
   border-bottom: 1px solid var(--divider);
   margin-bottom: 1rem;
 }
-.cv-item { margin-bottom: 1.1rem; }
+.cv-item { margin-bottom: 0.9rem; }
 .cv-item:last-child { margin-bottom: 0; }
 .cv-item-head {
   display: flex; justify-content: space-between;
@@ -331,23 +408,92 @@ body {
   line-height: 1.4;
 }
 .cv-item-date {
-  font-size: 0.68rem;
-  color: var(--light);
+  font-size: 0.75rem;
+  color: var(--muted);
   white-space: nowrap;
   flex-shrink: 0;
 }
 .cv-item-sub {
   font-family: var(--zh);
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   color: var(--muted);
   line-height: 1.6;
 }
 .cv-item-desc {
   font-family: var(--zh);
-  font-size: 0.72rem;
-  color: var(--light);
+  font-size: 0.8rem;
+  color: var(--muted);
   line-height: 1.6;
   margin-top: 0.15rem;
+}
+
+/* self intro block */
+.resume-intro {
+  font-family: var(--zh);
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.resume-intro strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* bullet list for cv items */
+.cv-item-bullets {
+  font-family: var(--zh);
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-top: 0.3rem;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.cv-item-bullets li {
+  list-style: disc;
+}
+.cv-item-bullets strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* resume info block（名字下方基本信息） */
+.resume-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.3rem;
+}
+.resume-info-line {
+  font-family: var(--zh);
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* 技能区横排 */
+.cv-skills-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.cv-skill-group {
+  flex: 1;
+  min-width: 140px;
+}
+.cv-skill-group-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
 }
 
 /* skill tags */
@@ -355,7 +501,7 @@ body {
   display: flex; flex-wrap: wrap; gap: 0.4rem;
 }
 .skill-tag {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   padding: 0.2rem 0.65rem;
   border: 1px solid var(--divider);
   border-radius: 2rem;
@@ -371,57 +517,11 @@ body {
   display: flex;
   flex-direction: column;
   padding-top: 56px;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* inner tab bar */
-.inner-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--divider);
-  background: var(--bg-white);
-  flex-shrink: 0;
-}
-.inner-tab {
-  flex: 1;
-  text-align: center;
-  padding: 1rem 0;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.25s;
-  user-select: none;
-}
-.inner-tab:hover { color: var(--text); }
-.inner-tab.active {
-  color: var(--text);
-  border-bottom-color: var(--pink-deep);
-  font-weight: 400;
-}
-
-/* tab panels */
-.tab-panels {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-}
-.tab-panel {
-  position: absolute; inset: 0;
-  overflow-y: auto;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(20px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
-}
-.tab-panel.active {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateX(0);
-}
-
-/* ── WORK TAB ── */
+/* ── WORK ── */
 .work-header {
   max-width: 960px; margin: 0 auto;
   padding: 3rem 3rem 1.5rem;
@@ -445,8 +545,9 @@ body {
 }
 
 .proj-cards {
-  max-width: 960px; margin: 0 auto;
-  padding: 2rem 3rem 4rem;
+max-width: 960px; margin: 0 auto;
+padding: 2rem 3rem 1.5rem;
+
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
@@ -459,9 +560,9 @@ body {
   display: flex; flex-direction: column; gap: 0.5rem;
   transition: box-shadow 0.2s, transform 0.2s;
 }
-.pcard:hover { box-shadow: 0 8px 28px rgba(44,36,32,0.07); transform: translateY(-2px); }
+/* pcard hover handled by .pcard.sr-in:hover */
 .pcard-tag {
-  font-size: 0.62rem; letter-spacing: 0.14em;
+  font-size: 0.75rem; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--pink-deep);
 }
 .pcard-name {
@@ -470,7 +571,7 @@ body {
   color: var(--text); line-height: 1.2;
 }
 .pcard-desc {
-  font-size: 0.8rem; color: var(--muted);
+  font-size: 0.88rem; color: var(--muted);
   line-height: 1.8; font-family: var(--zh); flex: 1;
 }
 .pcard-foot {
@@ -478,13 +579,88 @@ body {
   padding-top: 0.8rem; margin-top: 0.3rem;
   border-top: 1px solid var(--divider);
 }
-.pcard-year { font-size: 0.68rem; color: var(--light); }
+.pcard-year { font-size: 0.78rem; color: var(--muted); }
 .pcard-link {
-  font-size: 0.7rem; color: var(--muted);
+  font-size: 0.78rem; color: var(--muted);
   text-decoration: none; letter-spacing: 0.06em;
   transition: color 0.2s;
 }
 .pcard-link:hover { color: var(--pink-deep); }
+
+/* ── 观点区 ── */
+.work-views {
+  max-width: 960px; margin: 0 auto;
+  padding: 0 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.work-views-heading {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 0 0.6rem;
+}
+.work-views-heading-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--light);
+  white-space: nowrap;
+}
+.work-views-heading-line {
+  flex: 1;
+  height: 1px;
+  background: var(--divider);
+}
+.work-view-item {
+  padding: 1.6rem 0;
+  border-top: 1px solid var(--divider);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.work-view-item:last-child {
+  border-bottom: 1px solid var(--divider);
+}
+.work-view-tag {
+  font-family: var(--zh);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text);
+}
+/* Underline Reveal 动效 */
+.work-view-tag span {
+  display: inline-block;
+  position: relative;
+  cursor: default;
+}
+.work-view-tag span::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1.5px;
+  background: var(--pink-deep);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.work-view-item:hover .work-view-tag span::after {
+  transform: scaleX(1);
+}
+.work-view-body-wrap {}
+.work-view-body {
+  font-family: var(--zh);
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.75;
+}
+.work-view-body strong {
+  color: var(--text);
+  font-weight: 500;
+}
 
 /* skills strip under cards */
 .skills-strip {
@@ -499,274 +675,331 @@ body {
   margin-bottom: 0.4rem;
 }
 
-/* ── LIFE TAB ── */
-.life-header {
-  max-width: 100%;
-  padding: 3rem 4rem 2rem;
-  border-bottom: 1px solid var(--divider);
-  display: flex; align-items: flex-end; justify-content: space-between;
+/* ══════════════════════════════
+   页面切换：fade + 上移
+══════════════════════════════ */
+/* 当前显示的屏 */
+.screen.screen-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition: opacity 0.42s cubic-bezier(0.16,1,0.3,1),
+              transform 0.42s cubic-bezier(0.16,1,0.3,1),
+              visibility 0s linear 0s;
 }
-.life-title {
-  font-family: var(--serif);
-  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
-  font-weight: 400; color: var(--text); line-height: 1.2;
+/* 即将离开 */
+.screen.screen-leaving {
+  opacity: 0;
+  transform: translateY(-16px);
+  pointer-events: none;
+  visibility: visible;
+  transition: opacity 0.35s cubic-bezier(0.16,1,0.3,1),
+              transform 0.35s cubic-bezier(0.16,1,0.3,1),
+              visibility 0s linear 0.35s;
 }
-.life-sub {
-  font-size: 0.8rem; color: var(--muted); max-width: 220px;
-  text-align: right; line-height: 1.8;
-}
-
-/* three doors */
-.about-doors {
-  display: flex;
-  flex-direction: row;
-  gap: 0.8rem;
-  height: 320px;
-  padding: 0 1.5rem;
-  box-sizing: border-box;
-}
-.door {
-  position: relative; overflow: hidden;
-  flex: 1;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: flex 0.4s ease;
-}
-.door:hover { flex: 1.35; }
-.door:last-child { border-right: none; }
-/* 各卡片独立配色 */
-.door:nth-child(1) { background: #111111; } /* 摄影 · 近黑+米白 */
-.door:nth-child(2) { background: #1E1118; } /* 舞蹈 · 深茄紫+淡粉 */
-.door:nth-child(3) { background: #0F1318; } /* 旅行 · 深墨蓝+淡蓝灰 */
-/* 大字 */
-.door-bg {
-  position: absolute;
-  font-family: 'Bodoni Moda', serif;
-  font-weight: 900; font-style: italic;
-  font-size: 3.2rem; line-height: 0.9;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -120%);
-  white-space: nowrap;
-  user-select: none;
-  z-index: 1; opacity: 0.88;
-}
-.door:nth-child(1) .door-bg { color: #E8E0D5; }
-.door:nth-child(2) .door-bg { color: #D4A5A5; }
-.door:nth-child(3) .door-bg { color: #A8B8C4; }
-/* 文字信息居中 */
-.door-overlay {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, 30%);
-  z-index: 3;
-  text-align: center;
-  width: 90%;
-}
-.door-en {
-  font-size: 0.58rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-}
-.door:nth-child(1) .door-en { color: rgba(232,224,213,0.45); }
-.door:nth-child(2) .door-en { color: rgba(212,165,165,0.45); }
-.door:nth-child(3) .door-en { color: rgba(168,184,196,0.45); }
-.door-title {
-  font-family: var(--serif);
-  font-size: clamp(0.78rem, 1.2vw, 0.95rem);
-  font-weight: 300; font-style: italic;
-  line-height: 1.65;
-}
-.door:nth-child(1) .door-title { color: rgba(232,224,213,0.82); }
-.door:nth-child(2) .door-title { color: rgba(212,165,165,0.82); }
-.door:nth-child(3) .door-title { color: rgba(168,184,196,0.82); }
-/* CTA */
-.door-cta {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  margin-top: 0.9rem;
-  font-size: 0.55rem; letter-spacing: 0.18em;
-  text-transform: uppercase;
-  padding: 0.28rem 0.8rem;
-  border: 1px solid;
-  border-radius: 20px;
-  opacity: 0; transform: translateY(-4px);
-  transition: opacity 0.3s, transform 0.3s;
-}
-.door:hover .door-cta { opacity: 1; transform: translateY(0); }
-.door:nth-child(1) .door-cta { color: rgba(232,224,213,0.7); border-color: rgba(232,224,213,0.25); }
-.door:nth-child(2) .door-cta { color: #D4A5A5; border-color: rgba(212,165,165,0.35); }
-.door:nth-child(3) .door-cta { color: #A8B8C4; border-color: rgba(168,184,196,0.3); }
-.cta-line { display: none; }
-
-/* detail panels inside life tab */
-.life-detail {
-  display: none;
-  position: fixed;
-  inset: 56px 0 0 0;
-  background: var(--bg-white);
-  z-index: 250;
-  overflow-y: auto;
-  animation: panelIn 0.4s cubic-bezier(0.22,1,0.36,1);
-}
-.life-detail.open { display: block; }
-@keyframes panelIn {
-  from { opacity:0; transform: translateY(24px); }
-  to   { opacity:1; transform: translateY(0); }
-}
-.detail-close-bar {
-  position: sticky; top: 0; z-index: 10;
-  padding: 1rem 2rem;
-  background: rgba(253,251,248,0.95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--divider);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.detail-close-btn {
-  background: none; border: none; cursor: pointer;
-  font-size: 0.75rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--muted);
-  display: flex; align-items: center; gap: 0.4rem;
-  padding: 0;
-  transition: color 0.2s;
-}
-.detail-close-btn:hover { color: var(--text); }
-.detail-close-section {
-  font-size: 0.72rem; color: var(--light); letter-spacing: 0.1em;
-}
-
-/* gallery inside detail */
-.photo-gallery {
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  height: calc(100vh - 56px - 54px);
-}
-.gallery-main {
-  position: relative;
-  background: #0a0a0a;
-  overflow: hidden;
-}
-.gallery-main-slot {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: opacity 0.4s;
-}
-.gallery-main-slot img { width:100%; height:100%; object-fit:contain; }
-.gallery-main-slot.fade { opacity: 0; }
-.gallery-caption-bar {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 1.5rem 2rem;
-  background: linear-gradient(transparent, rgba(0,0,0,0.6));
-  display: flex; justify-content: space-between; align-items: flex-end;
-}
-.gallery-caption-title {
-  font-family: var(--serif);
-  font-size: 1.1rem; font-weight: 400; color: #fff;
-}
-.gallery-caption-sub {
-  font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: 0.2rem;
-}
-.gallery-counter {
-  font-size: 0.68rem; color: rgba(255,255,255,0.5); letter-spacing: 0.08em;
-}
-.gallery-rail {
-  overflow-y: auto; background: #111;
-  display: flex; flex-direction: column; gap: 2px; padding: 2px;
-}
-.gallery-rail::-webkit-scrollbar { display: none; }
-.gallery-thumb {
-  flex-shrink: 0;
-  aspect-ratio: 3/4;
-  background: #1a1a1a;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; opacity: 0.5; transition: opacity 0.25s;
-  overflow: hidden;
-}
-.gallery-thumb.active, .gallery-thumb:hover { opacity: 1; }
-.gallery-thumb img { width:100%; height:100%; object-fit:cover; }
-
-/* dance / travel generic detail */
-.detail-body-wrap {
-  max-width: 860px; margin: 0 auto;
-  padding: 3rem;
-}
-.detail-body-title {
-  font-family: var(--serif);
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
-  font-weight: 400; color: var(--text); line-height: 1.2;
-  margin-bottom: 0.8rem;
-}
-.detail-body-sub {
-  font-size: 0.85rem; color: var(--muted);
-  font-style: italic; margin-bottom: 2.5rem; line-height: 1.7;
-}
-.photo-grid-2 {
-  display: grid; grid-template-columns: 2fr 1fr;
-  gap: 0.8rem; margin-bottom: 1.5rem;
-}
-.photo-grid-3 {
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.8rem;
-}
-.photo-slot {
-  background: var(--bg-warm);
-  border: 1px dashed var(--divider);
-  aspect-ratio: 4/3;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 0.4rem; color: var(--light);
-  font-size: 0.68rem; letter-spacing: 0.08em;
-}
-.photo-slot.wide { grid-column: span 1; aspect-ratio: 3/2; }
-.photo-slot-icon { font-size: 1.5rem; opacity: 0.35; }
-/* 瀑布流 */
-.masonry { columns: 2; column-gap: 0.8rem; margin-top: 1.2rem; }
-.masonry-item { break-inside: avoid; margin-bottom: 1.4rem; cursor: zoom-in; }
-.masonry-item img { width: 100%; display: block; border-radius: 4px; transition: opacity 0.2s; }
-.masonry-item img:hover { opacity: 0.88; }
-.masonry-label { margin-top: 0.5rem; display: inline-block; background: rgba(168,184,196,0.18); border: 1px solid rgba(168,184,196,0.4); padding: 0.28rem 0.75rem; border-radius: 20px; font-size: 0.68rem; color: #2E3A42; letter-spacing: 0.04em; line-height: 1.6; }
-
-.photo-caption {
-  font-size: 0.82rem; color: var(--muted);
-  line-height: 1.9; font-style: italic;
-}
-
-/* travel places */
-.travel-places {
-  display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem;
-}
-.place-tag {
-  font-size: 0.75rem; padding: 0.3rem 0.8rem;
-  border-radius: 2rem; background: var(--bg-warm);
-  border: 1px solid var(--divider); color: var(--muted);
-  font-family: var(--zh);
-}
-.place-tag.visited { border-color: var(--pink-lt); color: var(--text); }
-
-/* map placeholder */
-.map-placeholder {
-  height: 180px; background: var(--bg-warm);
-  border: 1px solid var(--divider); border-radius: 8px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 0.5rem; color: var(--light);
-  font-size: 0.72rem; letter-spacing: 0.08em;
-  position: relative; overflow: hidden;
-  margin-bottom: 1.5rem;
-}
-.map-icon { font-size: 2rem; opacity: 0.2; }
-.map-dots { position: absolute; inset: 0; }
-.map-dot {
-  position: absolute; width: 6px; height: 6px;
-  border-radius: 50%; background: var(--pink);
-  animation: pulse 2s ease infinite;
-}
-@keyframes pulse {
-  0%,100%{transform:scale(1);opacity:0.5}
-  50%{transform:scale(1.6);opacity:1}
+/* 即将进入（从下方） */
+.screen.screen-entering {
+  opacity: 0;
+  transform: translateY(20px);
+  visibility: visible;
+  pointer-events: none;
+  transition: opacity 0.42s cubic-bezier(0.16,1,0.3,1),
+              transform 0.42s cubic-bezier(0.16,1,0.3,1),
+              visibility 0s linear 0s;
 }
 
 /* ══════════════════════════════
-   FADE IN
+SCREEN 4 · TMI
+══════════════════════════════ */
+#screen-tmi {
+  overflow-y: auto;
+  padding-top: 56px;
+}
+#screen-tmi::-webkit-scrollbar { width: 4px; }
+#screen-tmi::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+
+.tmi-wrap {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 2.5rem 3rem 4rem;
+}
+.tmi-header {
+  margin-bottom: 2rem;
+}
+.tmi-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--pink-deep);
+  margin-bottom: 0.5rem;
+}
+.tmi-title {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* Bento Grid */
+.tmi-bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 1rem;
+}
+.tmi-card {
+  background: var(--bg-white);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  padding: 1.4rem 1.6rem;
+  position: relative;
+  overflow: hidden;
+}
+.tmi-card-travel {
+  grid-row: span 1;
+}
+
+/* ── Accordion 故事区：第二行独占全行 ── */
+.tmi-accordion {
+  grid-column: 1 / -1;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-white);
+}
+
+/* 每一行 — trigger */
+.acc-item {
+  border-bottom: 1px solid var(--divider);
+}
+.acc-item:last-child {
+  border-bottom: none;
+}
+.acc-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.35rem 1.8rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  gap: 1.5rem;
+  transition: background 0.18s;
+}
+.acc-trigger:hover {
+  background: var(--bg-warm);
+}
+.acc-quote {
+  font-family: var(--zh);
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.65;
+  flex: 1;
+}
+.acc-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  position: relative;
+  color: var(--light);
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), color 0.2s;
+}
+.acc-icon::before,
+.acc-icon::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.2s;
+}
+.acc-icon::before { width: 12px; height: 1.5px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+.acc-icon::after  { width: 1.5px; height: 12px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+/* 展开状态 */
+.acc-item.open .acc-icon {
+  transform: rotate(45deg);
+  color: var(--pink-deep);
+}
+
+/* 内容区：高度过渡 */
+.acc-body-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.42s cubic-bezier(0.16,1,0.3,1);
+}
+.acc-item.open .acc-body-wrap {
+  grid-template-rows: 1fr;
+}
+.acc-body-inner {
+  overflow: hidden;
+}
+.acc-body {
+  padding: 0 1.8rem 1.5rem;
+  background: var(--bg-warm);
+}
+.acc-body p {
+  font-family: var(--zh);
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.9;
+  margin: 0 0 0.75rem;
+}
+.acc-body p:last-of-type { margin-bottom: 1rem; }
+.acc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.acc-tags span {
+  font-size: 0.72rem;
+  padding: 0.22rem 0.7rem;
+  border-radius: 20px;
+  background: var(--bg-white);
+  border: 1px solid var(--divider);
+  color: var(--muted);
+}
+.tmi-card-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pink-deep);
+  margin-bottom: 1rem;
+}
+
+/* (观点卡已移至 Work 页，此处已删除) */
+
+/* (已替换为故事卡区，翻转卡片样式已移除) */
+
+/* 地图卡 */
+.tmi-map {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-warm);
+  margin-top: 0.3rem;
+}
+.tmi-map-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.tmi-poi {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transform: translate(-50%, -100%);
+  cursor: default;
+}
+.tmi-poi-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--pink-deep);
+  box-shadow: 0 0 0 3px rgba(180,128,128,0.25);
+  animation: poiPulse 2.2s ease infinite;
+}
+@keyframes poiPulse {
+  0%,100%{box-shadow:0 0 0 3px rgba(180,128,128,0.25)}
+  50%{box-shadow:0 0 0 6px rgba(180,128,128,0.12)}
+}
+.tmi-poi-label {
+  font-size: 0.6rem;
+  font-family: var(--zh);
+  color: var(--muted);
+  white-space: nowrap;
+  background: rgba(253,251,248,0.92);
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  border: 1px solid var(--divider);
+  margin-top: 2px;
+}
+
+/* 书单 */
+.tmi-book-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.tmi-book-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.tmi-book-spine {
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.tmi-book-title {
+  font-family: var(--zh);
+  font-size: 0.85rem;
+  color: var(--text);
+  font-weight: 500;
+}
+.tmi-book-author {
+  font-size: 0.72rem;
+  color: var(--light);
+  margin-top: 0.1rem;
+}
+
+/* 音乐列表 */
+.tmi-music-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.tmi-music-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.tmi-music-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.tmi-music-bars span {
+  width: 3px;
+  height: var(--h, 50%);
+  background: var(--pink);
+  border-radius: 2px;
+  animation: musicWave 1.2s ease infinite;
+}
+.tmi-music-bars span:nth-child(2) { animation-delay: 0.15s; }
+.tmi-music-bars span:nth-child(3) { animation-delay: 0.3s; }
+.tmi-music-bars span:nth-child(4) { animation-delay: 0.45s; }
+@keyframes musicWave {
+  0%,100%{ transform: scaleY(0.5); opacity: 0.6; }
+  50%{ transform: scaleY(1); opacity: 1; }
+}
+.tmi-music-info {}
+.tmi-music-title {
+  font-family: var(--sans);
+  font-size: 0.84rem;
+  color: var(--text);
+  font-weight: 400;
+}
+.tmi-music-artist {
+  font-size: 0.72rem;
+  color: var(--light);
+  margin-top: 0.1rem;
+}
+
+/* ══════════════════════════════
+   FADE IN / SCROLL REVEAL
 ══════════════════════════════ */
 .fade-up {
   opacity: 0; transform: translateY(20px);
@@ -777,6 +1010,35 @@ body {
 .fade-up.d2 { transition-delay: 0.16s; }
 .fade-up.d3 { transition-delay: 0.24s; }
 .fade-up.d4 { transition-delay: 0.32s; }
+
+/* Scroll Reveal: 全局通用 */
+.sr {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
+              transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.sr.sr-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Scroll Reveal: 项目卡片（单独控制） */
+.pcard {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.55s cubic-bezier(0.16,1,0.3,1),
+              transform 0.55s cubic-bezier(0.16,1,0.3,1),
+              box-shadow 0.2s;
+}
+.pcard.sr-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.pcard.sr-in:hover {
+  box-shadow: 0 8px 28px rgba(44,36,32,0.07);
+  transform: translateY(-2px);
+}
 </style>
 </head>
 <body>
@@ -787,8 +1049,8 @@ body {
   <ul class="nav-tabs">
     <li class="nav-tab active" id="ntab-profile" onclick="goToScreen('profile')">Profile</li>
     <li class="nav-tab" id="ntab-about"   onclick="goToScreen('about')">About</li>
-    <li class="nav-tab" id="ntab-work"    onclick="goToScreen('tabs'); setTab('work')">Work</li>
-    <li class="nav-tab" id="ntab-life"    onclick="goToScreen('tabs'); setTab('life')">Life</li>
+    <li class="nav-tab" id="ntab-work"    onclick="goToScreenWithCurtain('tabs')">Work</li>
+    <li class="nav-tab" id="ntab-tmi"     onclick="goToScreenWithCurtain('tmi')">TMI</li>
   </ul>
 </nav>
 
@@ -817,10 +1079,10 @@ body {
       </button>
     </div>
 
-    <div class="scroll-cue" onclick="scrollToAbout()">
-      <div class="cue-line"></div>
-      scroll
-    </div>
+    <button class="screen-next-btn" onclick="goToScreen('about')">
+      <span class="screen-next-btn-label">About</span>
+      <span class="screen-next-btn-line"></span>
+    </button>
   </section>
 
  <!-- ═══════════════════════════
@@ -840,13 +1102,11 @@ body {
       <div class="resume-top fade-up">
         <div class="resume-name-block">
           <div class="resume-name-zh">程思语</div>
-          <div class="resume-name-en">Cheng Siyu &nbsp;·&nbsp; Chloe</div>
+          <div class="resume-name-en">Cheng Siyu &nbsp;&nbsp; Chloe</div>
         </div>
         <div class="resume-info-block">
-          <div class="resume-info-line">中国人民大学商学院</div>
-          <div class="resume-info-line">工商管理 / 会计学 &nbsp;·&nbsp; 2027届</div>
-          <div class="resume-contact" style="margin-top:0.4rem;">📱 15701601901</div>
-          <div class="resume-contact">✉️ 15701601901@163.com</div>
+          <div class="resume-info-line">中国人民大学商学院 &nbsp;工商管理 / 会计学 &nbsp;2027届</div>
+          <div class="resume-info-line" style="margin-top:0.3rem;">15701601901 &nbsp;&nbsp;15701601901@163.com</div>
         </div>
       </div>
 
@@ -855,154 +1115,122 @@ body {
         希望成为一个'丰富'的人。有温度、有思考、有能力。
       </div>
 
-      <!-- three columns -->
+      <!-- resume body: 单列，从上到下 -->
       <div class="resume-body">
 
-        <!-- col 1: 实习经历 + 教育经历 -->
+        <!-- 教育经历 -->
         <div class="cv-section fade-up d1">
-          <div class="cv-label">实习经历</div>
-
-          <!-- 美团（新增，置顶） -->
+          <div class="cv-label">教育经历</div>
           <div class="cv-item">
             <div class="cv-item-head">
-              <div class="cv-item-title">美团 · 在线娱乐部</div>
+              <div class="cv-item-title">中国人民大学商学院</div>
+              <div class="cv-item-date">2023–2027</div>
+            </div>
+            <div class="cv-item-sub">本科 · 工商管理 / 会计学</div>
+          </div>
+          <div class="cv-item">
+            <div class="cv-item-head">
+              <div class="cv-item-title">Luiss Guido Carli · 意大利罗马</div>
+              <div class="cv-item-date">2024–2025</div>
+            </div>
+            <div class="cv-item-sub">Business Administration · 交换生</div>
+          </div>
+        </div>
+
+        <!-- 实习经历 -->
+        <div class="cv-section fade-up d2">
+          <div class="cv-label">实习经历</div>
+
+          <!-- 美团 -->
+          <div class="cv-item">
+            <div class="cv-item-head">
+              <div class="cv-item-title">美团 </div>
               <div class="cv-item-date">2026.05–至今</div>
             </div>
-            <div class="cv-item-sub">蛙蛙AIGC工具 <br>产品经理实习生</div>
-            <div class="cv-item-desc">主导 AIGC 分镜流程重构与 Prompt 工程化设计；独立完成交互原型与 Demo 开发；输出 AI 视频生成赛道深度竞品分析报告</div>
+            <div class="cv-item-sub">在线娱乐部&nbsp;·&nbsp; 产品经理</div>
+            <ul class="cv-item-bullets">
+              <li><strong>模型生成质量优化：</strong>主导 AIGC Prompt 系统化设计，构建双层架构与自动关联资产机制；通过多步骤调用解决分镜生成输出不稳定，实现工业级分镜表输出。</li>
+              <li><strong>功能交互体验优化：</strong>基于用户心智重构分镜到短剧制作的交互流程，独立完成交互原型与流程 Demo 开发，效果优于内部竞品。</li>
+              <li><strong>自动化流程建设：</strong>封装底层 Prompt 并设计数据流转机制，实现分镜表到生图/生视频 Prompt 的自动化生成，降低用户编辑门槛；自主编排工作流用于快速验证 Prompt 效果，提升迭代效率。</li>
+            </ul>
           </div>
 
-          <!-- 小红书（描述升级） -->
-          <div class="cv-item" style="margin-top:1rem;">
+          <!-- 小红书 -->
+          <div class="cv-item">
             <div class="cv-item-head">
               <div class="cv-item-title">小红书</div>
               <div class="cv-item-date">2026.01–04</div>
             </div>
-            <div class="cv-item-sub">风险感知与策略运营中心<br>风控策略运营实习生</div>
-            <div class="cv-item-desc">独立主导母婴高危禁投 Badcase 聚类归因；构建「事件量×VVR浓度×diff值」优先级框架；推动策略优化将误伤率从 33.8% 降至 25.5%</div>
-          </div>
-
-          <!-- 教育经历 -->
-          <div style="margin-top:1.4rem;">
-            <div class="cv-label">教育经历</div>
-            <div class="cv-item">
-              <div class="cv-item-head">
-                <div class="cv-item-title">中国人民大学商学院</div>
-                <div class="cv-item-date">2023–2027</div>
-              </div>
-              <div class="cv-item-sub">本科 · 工商管理 / 会计学</div>
-            </div>
-            <div class="cv-item">
-              <div class="cv-item-head">
-                <div class="cv-item-title">Luiss Guido Carli · 意大利罗马</div>
-                <div class="cv-item-date">2024–2025</div>
-              </div>
-              <div class="cv-item-sub">Business Administration · 交换生</div>
-            </div>
+            <div class="cv-item-sub">风险感知与策略运营中心 &nbsp;·&nbsp; 风控策略运营实习生</div>
+            <ul class="cv-item-bullets">
+              <li><strong>风险洞察与归因：</strong>基于外部风险反馈和已知风险信息汇总，聚焦风险数据监测进行聚类与归因分析，构建结构化风险特征库。</li>
+              <li><strong>策略部署方向构建：</strong>构建核心体验指标体系，定义「事件量×VVR浓度×diff值」的优先级判断框架，驱动团队进行资源聚焦。</li>
+              <li><strong>风险感知闭环与防控能力建设：</strong>针对特定风险域机审高误伤率发起策略优化，将该场景误伤率从 33.8% 降至 25.5%，并在复盘中对「管控效率与创作者体验」的权衡进行产品化论证。</li>
+            </ul>
           </div>
         </div>
 
-        <!-- col 2: 项目经历 -->
-        <div class="cv-section fade-up d2">
-          <div class="cv-label">项目经历</div>
-
-          <!-- JoyOps（描述升级） -->
-          <div class="cv-item">
-            <div class="cv-item-head">
-              <div class="cv-item-title">JoyOps · 出海商品运营AI一站式工具</div>
-              <div class="cv-item-date">2026.04</div>
-            </div>
-            <div class="cv-item-desc">zuo w诶项目负责人；设计选品预检→运营本地化→欧洲合规监控三位一体协同 Agent；工作流从 2–3 周压缩至 3–5 天。获「京东杯」创业创新大赛决赛<strong>一等奖</strong></div>
-          </div>
-
-          <!-- StageShare -->
-          <div class="cv-item">
-            <div class="cv-item-head">
-              <div class="cv-item-title">StageShare · 路演闲置衣物共享小程序</div>
-              <div class="cv-item-date">2026.04</div>
-            </div>
-            <div class="cv-item-desc">从零到微信小程序 Demo，全程 AI 协作，完整实现 5 个 Tab + IM + 预定流转的产品功能落地</div>
-          </div>
-
-          <!-- 舞蹈自媒体 -->
-          <div class="cv-item">
-            <div class="cv-item-head">
-              <div class="cv-item-title">舞蹈领域自媒体博主</div>
-              <div class="cv-item-date">2023–至今</div>
-            </div>
-            <div class="cv-item-desc">独立运营小红书 / 抖音 / B站全平台，累计粉丝 7000+；单条视频最高播放 160w，点赞 13.1w</div>
-          </div>
-        </div>
-
-        <!-- col 3: 技能 -->
+        <!-- 技能 & 优势 -->
         <div class="cv-section fade-up d3">
           <div class="cv-label">技能 &amp; 优势</div>
-
-          <div class="cv-item">
-            <div class="cv-item-title" style="margin-bottom:0.5rem;">AI-Native 能力</div>
-            <div class="skill-tags">
-              <span class="skill-tag">Prompt Engineering</span>
-              <span class="skill-tag">Agent 搭建</span>
-              <span class="skill-tag">AI Workflow</span>
-              <span class="skill-tag">PRD→Demo 全链路</span>
-              <span class="skill-tag">多模态大模型（seedream等）</span>
+          <div class="cv-skills-row">
+            <div class="cv-skill-group">
+              <div class="cv-skill-group-label">AI-Native</div>
+              <div class="skill-tags">
+                <span class="skill-tag">Prompt Engineering</span>
+                <span class="skill-tag">Agent 搭建</span>
+                <span class="skill-tag">AI Workflow</span>
+                <span class="skill-tag">PRD→Demo 全链路</span>
+                <span class="skill-tag">多模态大模型</span>
+              </div>
             </div>
-          </div>
-
-          <div class="cv-item" style="margin-top:1rem;">
-            <div class="cv-item-title" style="margin-bottom:0.5rem;">数据分析</div>
-            <div class="skill-tags">
-              <span class="skill-tag">SQL</span>
-              <span class="skill-tag">Python</span>
-              <span class="skill-tag">Power BI</span>
-              <span class="skill-tag">Excel</span>
+            <div class="cv-skill-group">
+              <div class="cv-skill-group-label">数据分析</div>
+              <div class="skill-tags">
+                <span class="skill-tag">SQL</span>
+                <span class="skill-tag">Python</span>
+                <span class="skill-tag">Power BI</span>
+                <span class="skill-tag">Excel</span>
+              </div>
             </div>
-          </div>
-
-          <div class="cv-item" style="margin-top:1rem;">
-            <div class="cv-item-title" style="margin-bottom:0.5rem;">产品 &amp; 设计</div>
-            <div class="skill-tags">
-              <span class="skill-tag">PRD撰写</span>
-              <span class="skill-tag">用户调研</span>
-              <span class="skill-tag">竞品分析</span>
-              <span class="skill-tag">Figma</span>
-              <span class="skill-tag">A/B 实验</span>
+            <div class="cv-skill-group">
+              <div class="cv-skill-group-label">产品 &amp; 设计</div>
+              <div class="skill-tags">
+                <span class="skill-tag">PRD撰写</span>
+                <span class="skill-tag">用户调研</span>
+                <span class="skill-tag">竞品分析</span>
+                <span class="skill-tag">Figma</span>
+                <span class="skill-tag">A/B 实验</span>
+              </div>
             </div>
-          </div>
-
-          <div class="cv-item" style="margin-top:1rem;">
-            <div class="cv-item-title" style="margin-bottom:0.3rem;">语言</div>
-            <div class="cv-item-desc">中文（母语）· English（IELTS 7.0，可作工作语言）</div>
-          </div>
-
-          <div class="cv-item" style="margin-top:1rem;">
-            <div class="cv-item-title" style="margin-bottom:0.3rem;">荣誉</div>
-            <div class="cv-item-desc">「京东杯」创业创新大赛 决赛一等奖<br>「京彩大创」创业创新大赛 三等奖<br>人大 FreeDancer 自由舞者协会 社长</div>
+            <div class="cv-skill-group">
+              <div class="cv-skill-group-label">语言 &amp; 荣誉</div>
+              <div class="skill-tags">
+                <span class="skill-tag">中文（母语）</span>
+                <span class="skill-tag">English · IELTS 7.0</span>
+                <span class="skill-tag">「京东杯」一等奖</span>
+                <span class="skill-tag">FreeDancer 社长</span>
+              </div>
+            </div>
           </div>
         </div>
 
       </div><!-- /resume-body -->
 
+      <div style="display:flex;justify-content:center;padding:1.5rem 0 2rem;">
+        <button class="screen-next-btn screen-next-btn--inline" onclick="goToScreenWithCurtain('tabs')">
+          <span class="screen-next-btn-label">Work</span>
+          <span class="screen-next-btn-line"></span>
+        </button>
+      </div>
     </div><!-- /about-resume -->
   </section>
 
   <!-- ═══════════════════════════
-       SCREEN 3 · TABS (Work / Life)
+       SCREEN 3 · WORK
   ═══════════════════════════ -->
   <section class="screen" id="screen-tabs">
-
-    <!-- inner tab bar -->
-    <div class="inner-tabs">
-      <div class="inner-tab active" id="itab-work" onclick="setTab('work')">Work · 项目</div>
-      <div class="inner-tab" id="itab-life" onclick="setTab('life')">Life · 生活</div>
-    </div>
-
-    <!-- tab panels -->
-    <div class="tab-panels">
-
-      <!-- WORK panel -->
-      <div class="tab-panel active" id="panel-work">
-        <div class="work-header">
+        <div class="work-header sr">
           <div class="work-header-left">
             <div class="work-label">Things I've built and shipped.</div>
             <div class="work-title">项目成果</div>
@@ -1011,24 +1239,6 @@ body {
         </div>
 
         <div class="proj-cards">
-          <div class="pcard">
-            <div class="pcard-tag">小程序 · 个人项目</div>
-            <div class="pcard-name">StageShare · 路演闲置衣物共享小程序</div>
-            <div class="pcard-desc">从零到微信小程序Demo，全程AI协作，完整实现5个Tab+IM+预定流转的产品功能落地。</div>
-            <div class="pcard-foot">
-              <span class="pcard-year">2026 · Apr</span>
-              <a href="https://chengsiyu-web.github.io/Chloe-s-demo/stageshare/index.html" target="_blank" class="pcard-link">查看项目 ↗</a>
-            </div>
-          </div>
-          <div class="pcard">
-            <div class="pcard-tag">AI产品·PRD + 智能体</div>
-            <div class="pcard-name">微信读书AI推书助手</div>
-            <div class="pcard-desc">「阅读DNA」回复逻辑设计，运用AI agent赋能用户隐性需求挖掘。</div>
-            <div class="pcard-foot">
-              <span class="pcard-year">2026 · Mar</span>
-              <a href="https://chengsiyu-web.github.io/Chloe-s-demo/Weread/index.html" target="_blank" class="pcard-link">查看项目 ↗</a>
-            </div>
-          </div>
           <div class="pcard">
             <div class="pcard-tag">创业创新大赛一等奖项目</div>
             <div class="pcard-name">JoyOps · 基于多Agent协同的跨境商品运营工作台</div>
@@ -1047,320 +1257,321 @@ body {
               <a href="https://chengsiyu-web.github.io/Analysis/" target="_blank" class="pcard-link">查看分析 ↗</a>
             </div>
           </div>
+          <div class="pcard">
+            <div class="pcard-tag">小程序 · 个人项目</div>
+            <div class="pcard-name">StageShare · 路演闲置衣物共享小程序</div>
+            <div class="pcard-desc">从零到微信小程序Demo，全程AI协作，完整实现5个Tab+IM+预定流转的产品功能落地。</div>
+            <div class="pcard-foot">
+              <span class="pcard-year">2026 · Apr</span>
+              <a href="https://chengsiyu-web.github.io/Chloe-s-demo/stageshare/index.html" target="_blank" class="pcard-link">查看项目 ↗</a>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="pcard-tag">AI产品·PRD + 智能体</div>
+            <div class="pcard-name">微信读书AI推书助手</div>
+            <div class="pcard-desc">「阅读DNA」回复逻辑设计，运用AI agent赋能用户隐性需求挖掘。</div>
+            <div class="pcard-foot">
+              <span class="pcard-year">2026 · Mar</span>
+              <a href="https://chengsiyu-web.github.io/Chloe-s-demo/Weread/index.html" target="_blank" class="pcard-link">查看项目 ↗</a>
+            </div>
+          </div>
 
         </div><!-- /proj-cards -->
 
-        <div class="skills-strip">
-          <div class="strip-label">技能标签</div>
-          <span class="skill-tag">产品设计</span>
-          <span class="skill-tag">AI-Native</span>
-          <span class="skill-tag">PRD撰写</span>
-          <span class="skill-tag">用户研究</span>
-          <span class="skill-tag">数据分析</span>
-          <span class="skill-tag">Coze</span>
-          <span class="skill-tag">Figma/原型设计</span>
-          <span class="skill-tag">广告业务全链路</span>
-        </div>
-      </div><!-- /panel-work -->
+    <button class="screen-next-btn" onclick="goToScreenWithCurtain('thinking')">
+      <span class="screen-next-btn-label">My Thinking</span>
+      <span class="screen-next-btn-line"></span>
+    </button>
+  </section>
 
-      <!-- LIFE panel -->
-      <div class="tab-panel" id="panel-life">
-        <div class="life-header">
-          <div>
-            <div class="work-label">Beyond Work · 关于生活</div>
-            <div class="life-title">那些简历写不下来的部分。</div>
-          </div>
-          <div class="life-sub">我如何生活。</div>
+
+  <!-- ═══════════════════════════
+       SCREEN 4 · MY THINKING
+  ═══════════════════════════ -->
+  <section class="screen" id="screen-thinking">
+    <div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding-top:56px;box-sizing:border-box;">
+      <div class="work-views" style="max-width:960px;width:100%;margin:0 auto;padding:0 3rem;">
+
+        <div class="sr" style="margin-bottom: 1.5rem;">
+          <div class="work-label">What I believe about building with AI.</div>
+          <div class="work-title">My Thinking</div>
         </div>
 
-        <!-- three doors -->
-        <div class="about-doors">
-          <div class="door" onclick="openLife('photography')">
-            <div class="door-bg">PHOTO</div>
-            <div class="door-overlay">
-              <div class="door-en">Photography · 摄影</div>
-              <div class="door-title">用镜头，用心，去感知这个世界。</div>
-              <div class="door-cta">Explore ↗</div>
-            </div>
-          </div>
-          <div class="door" onclick="openLife('dance')">
-            <div class="door-bg">DANCE</div>
-            <div class="door-overlay">
-              <div class="door-en">Dance · 舞蹈</div>
-              <div class="door-title">如果你也能体会，舞台灯光亮起的刹那心跳。</div>
-              <div class="door-cta">Explore ↗</div>
-            </div>
-          </div>
-          <div class="door" onclick="openLife('travel')">
-            <div class="door-bg">TRAVEL</div>
-            <div class="door-overlay">
-              <div class="door-en">Travel · 旅行</div>
-              <div class="door-title">命运所有的雨季，都是为了回到最初的洋流。</div>
-              <div class="door-cta">Explore ↗</div>
-            </div>
+        <div class="work-view-item sr">
+          <div class="work-view-tag"><span>关于 AI PM 的核心能力</span></div>
+          <div class="work-view-body-wrap">
+            <div class="work-view-body">AI 产品经理的价值，不在于懂多少技术，而在于判断需求、选择合适的技术栈，知道何时让技术介入。既不能造出没人用的「AI 功能」，也不能只做不考虑技术边界的交互稿——更重要的是想清楚：用户应该看见什么，不应该看见什么。封装层的边界，决定了产品的气质。</div>
           </div>
         </div>
-      </div><!-- /panel-life -->
 
-    </div><!-- /tab-panels -->
+        <div class="work-view-item sr">
+          <div class="work-view-tag"><span>关于 AI 狂潮的背后</span></div>
+          <div class="work-view-body-wrap">
+            <div class="work-view-body">当所有产品都要加上Agent的时候，我觉得更重要的是：需求场景是否存在？是否一定要用Agent解决？真正值得用 Agent 的，是必须伸手去拿外部工具、需要让模型去思考完成路径的任务——不是每一个需求都需要套用固定的模式来加冕。</div>
+          </div>
+        </div>
+
+        <div class="work-view-item sr">
+          <div class="work-view-tag"><span>关于 AI 的商业真相</span></div>
+          <div class="work-view-body-wrap">
+            <div class="work-view-body">学商科让我养成了一个习惯：先找到钱从哪来，再谈改变世界。任何业务都可以站在宏观的角度思考，用跨行业的视角来辅助理解——无论什么载体（短视频、小说、短剧）背后都是内容分发与消费，思路可以共通。AI 业务也逃不开这个底层逻辑：模型可以租，但商业场景不能借。空烧 token 不是创新，找到真实锚点，护城河才有地基。</div>
+          </div>
+        </div>
+
+      </div><!-- /work-views -->
+    </div><!-- /center-wrap -->
+    <button class="screen-next-btn" onclick="goToScreenWithCurtain('tmi')">
+      <span class="screen-next-btn-label">TMI</span>
+      <span class="screen-next-btn-line"></span>
+    </button>
+  </section>
+
+
+  <!-- ═══════════════════════════
+       SCREEN 4 · TMI
+  ═══════════════════════════ -->
+  <section class="screen" id="screen-tmi">
+    <div class="tmi-wrap">
+
+      <div class="tmi-header fade-up">
+        <div class="tmi-label">Too Much Information &nbsp;·&nbsp; 关于我</div>
+        <div class="tmi-title">简历以外的我
+
+      <div class="tmi-bento">
+
+        <!-- Accordion 故事区：三行，竖排，全行宽 -->
+        <div class="tmi-accordion fade-up d1">
+
+          <!-- 行 1：旅行 -->
+          <div class="acc-item" id="acc-travel">
+            <button class="acc-trigger" onclick="toggleAcc('acc-travel')" aria-expanded="false">
+              <span class="acc-quote">命运所有的雨季，都是为了回到最初的洋流。</span>
+              <span class="acc-icon" aria-hidden="true"></span>
+            </button>
+            <div class="acc-body-wrap">
+              <div class="acc-body-inner">
+                <div class="acc-body">
+                  <p>在意大利的一年，也许算我驶出既定轨道的一段日子。人生的雨季里，既有在异国他乡遇到过的困难和煎熬，也有独自走过十几个城市所见过的风景。我想我不会忘记某个连日阴雨后看到最澄澈的南法的海，不会忘记在意大利下课后去兼职当舞蹈老师的日子，也不会忘记和来自五湖四海的同学用英文争论各自国家视角下的国际局势。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 行 2：舞蹈 -->
+          <div class="acc-item" id="acc-dance">
+            <button class="acc-trigger" onclick="toggleAcc('acc-dance')" aria-expanded="false">
+              <span class="acc-quote">要一起跳舞吗？</span>
+              <span class="acc-icon" aria-hidden="true"></span>
+            </button>
+            <div class="acc-body-wrap">
+              <div class="acc-body-inner">
+                <div class="acc-body">
+                  <p>平平无奇的跳舞人和校园舞蹈博主，从 Kpop 跳到 Urban/Hiphop，在跳舞还需要持续进步，欢迎来找我跳舞。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        
+          <!-- 行 4：成长路径 -->
+          <div class="acc-item" id="acc-growth">
+            <button class="acc-trigger" onclick="toggleAcc('acc-growth')" aria-expanded="false">
+              <span class="acc-quote">在什么都要"垂直"的时代，我想要做一棵树。</span>
+              <span class="acc-icon" aria-hidden="true"></span>
+            </button>
+            <div class="acc-body-wrap">
+              <div class="acc-body-inner">
+                <div class="acc-body">
+                  <p>在学校，作为商科学生，我学习企业战略、管理学、会计学，在宏观视角和具体科目之间寻找理解商业的方式。</p>
+                  <p>交换那一年，我从国际政治、欧盟经济法的角度重塑了自己的国际认知——这不是我的专业方向，但我想驱动自己去了解更广阔的世界，和构成现状的复杂历史背景。</p>
+                  <p>开始进入互联网公司实习之后，AI 在我面前打开了一个潘多拉魔盒。我在 FOMO 中坚持前行，努力完善自己的技术视角，从一个完全的计算机小白，到能够自己 vibe coding 项目。我始终保持对新事物的好奇心，希望能让 AI 帮助我提升效率，希望能用 AI 做一些有趣的、有用的事情。</p>
+                  <p>我也曾困扰于"垂直"在这个时代的重要性，但我不想把自己打造成深深契合某个岗位的螺丝钉，而是一个可以随时生长的树。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /tmi-accordion -->
+
+      </div><!-- /tmi-bento -->
+    </div><!-- /tmi-wrap -->
   </section>
 
 </div><!-- /scroll-wrap -->
 
-<!-- ═══════════════════════════
-     LIFE DETAIL OVERLAYS (fixed)
-═══════════════════════════ -->
-
-<!-- Photography -->
-<div class="life-detail" id="life-photography">
-  <div class="detail-close-bar">
-    <button class="detail-close-btn" onclick="closeLife('photography')">← 返回</button>
-    <div class="detail-close-section">Photography · 摄影</div>
-  </div>
-  <div class="photo-gallery">
-    <div class="gallery-main" id="gallery-main">
-      <div class="gallery-main-slot" id="gallery-main-inner">
-        <span style="font-size:5rem;opacity:0.1;">📷</span>
-      </div>
-      <div class="gallery-caption-bar">
-        <div>
-          <div class="gallery-caption-title" id="gallery-cap-title">Photography</div>
-          <div class="gallery-caption-sub" id="gallery-cap-sub">用镜头，用心去感知这个世界。</div>
-          <div class="masonry">
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_4759.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E7%B1%B3%E5%85%B0.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF3.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF4.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%99.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%991.jpg" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%992.jpg" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%8C%88%E7%89%99%E5%88%A9.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%8C%88%E7%89%99%E5%88%A92.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_4546.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E4%B8%AD%E7%8E%AF.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E5%85%B0%E6%A1%82%E5%9D%8A.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E5%9D%9A%E5%B0%BC%E5%9C%B0%E5%9F%8E.JPG" alt="摄影"></div>
-            <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%991.JPG" alt="摄影"></div>
-          </div>
-        <div class="gallery-counter" id="gallery-counter">01 / 06</div>
-      </div>
-    </div>
-    <div class="gallery-rail" id="gallery-rail"></div>
-  </div>
-</div>
-
-<!-- Dance -->
-<div class="life-detail" id="life-dance">
-  <div class="detail-close-bar">
-    <button class="detail-close-btn" onclick="closeLife('dance')">← 返回</button>
-    <div class="detail-close-section">Dance · 舞蹈</div>
-  </div>
-  <div class="detail-body-wrap">
-    <div class="detail-body-title">如果你也能体会<br>舞台灯光亮起的刹那心跳。</div>
-    <div class="detail-body-sub">舞台上的我，是平时藏起来的那部分。</div>
-    <div class="masonry">
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_2594.JPG" alt="舞蹈"></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%941.JPG" alt="路演1"></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%942.JPG" alt="路演2"></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%B7%AF%E6%BC%943.JPG" alt="路演3"></div>
-    </div>
-    <p class="photo-caption" style="margin-top:1.5rem;">Dance til the end.</p>
-  </div>
-</div>
-
-<!-- Travel -->
-<div class="life-detail" id="life-travel">
-  <div class="detail-close-bar">
-    <button class="detail-close-btn" onclick="closeLife('travel')">← 返回</button>
-    <div class="detail-close-section">Travel · 旅行</div>
-  </div>
-  <div class="detail-body-wrap">
-    <div class="detail-body-title">命运所有的雨季<br>都是为了回到最初的洋流。</div>
-    <div class="detail-body-sub">在大洋彼岸的一年中，见到的人和走过的路构成了现在的我。</div>
-    <div class="map-placeholder">
-      <div class="map-dots">
-        <div class="map-dot" style="top:38%;left:52%"></div>
-        <div class="map-dot" style="top:36%;left:48%;animation-delay:0.4s"></div>
-        <div class="map-dot" style="top:40%;left:55%;animation-delay:0.8s"></div>
-        <div class="map-dot" style="top:34%;left:45%;animation-delay:1.2s"></div>
-        <div class="map-dot" style="top:42%;left:58%;animation-delay:0.6s"></div>
-        <div class="map-dot" style="top:35%;left:60%;animation-delay:1s"></div>
-        <div class="map-dot" style="top:45%;left:50%;animation-delay:0.2s"></div>
-      </div>
-      <span class="map-icon">🗺</span>
-      <span>Interactive map · coming soon</span>
-    </div>
-    <div class="travel-places">
-      <span class="place-tag visited">🇮🇹 意大利 · 罗马</span>
-      <span class="place-tag visited">🇫🇷 法国 · 巴黎</span>
-      <span class="place-tag visited">🇪🇸 西班牙 · 巴塞罗那</span>
-      <span class="place-tag visited">🇮🇹 意大利 · 米兰</span>
-      <span class="place-tag visited">🇨🇭 日本 · 东京</span>
-      <span class="place-tag visited">🇮🇸 冰岛 </span>
-      <span class="place-tag visited">🇩🇰 丹麦 · 哥本哈根</span>
-    </div>
-    <div class="masonry">
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_4759.JPG" alt="意大利罗马"><div class="masonry-label">🇮🇹 意大利 · 罗马 · 2024.09</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E7%B1%B3%E5%85%B0.JPG" alt="米兰"><div class="masonry-label">🇮🇹 意大利 · 米兰 · 2025.01</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF.JPG" alt="威尼斯"><div class="masonry-label">🇮🇹 意大利 · 威尼斯 · 2025.04</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF3.JPG" alt="威尼斯3"><div class="masonry-label">🇮🇹 意大利 · 威尼斯 · 2025.04</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%A8%81%E5%B0%BC%E6%96%AF4.JPG" alt="威尼斯4"><div class="masonry-label">🇮🇹 意大利 · 威尼斯 · 2025.04</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%99.JPG" alt="西班牙"><div class="masonry-label">🇪🇸 西班牙 · 2024.11</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%991.jpg" alt="西班牙1"><div class="masonry-label">🇪🇸 西班牙 · 2024.11</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E8%A5%BF%E7%8F%AD%E7%89%992.jpg" alt="西班牙2"><div class="masonry-label">🇪🇸 西班牙 · 2024.11</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%8C%88%E7%89%99%E5%88%A9.JPG" alt="匈牙利"><div class="masonry-label">🇭🇺 匈牙利 · 布达佩斯 · 2024.11</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E5%8C%88%E7%89%99%E5%88%A92.JPG" alt="匈牙利2"><div class="masonry-label">🇭🇺 匈牙利 · 布达佩斯 · 2024.11</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/IMG_4546.JPG" alt="日本"><div class="masonry-label">🇯🇵 日本 · 2024.07</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E4%B8%AD%E7%8E%AF.JPG" alt="香港中环"><div class="masonry-label">🇭🇰 香港 · 中环 · 2024.01</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E5%85%B0%E6%A1%82%E5%9D%8A.JPG" alt="香港兰桂坊"><div class="masonry-label">🇭🇰 香港 · 兰桂坊 · 2024.01</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%99%E6%B8%AF-%E5%9D%9A%E5%B0%BC%E5%9C%B0%E5%9F%8E.JPG" alt="香港坚尼地城"><div class="masonry-label">🇭🇰 香港 · 坚尼地城 · 2024.01</div></div>
-      <div class="masonry-item"><img src="https://chengsiyu-web.github.io/Portfolio/%E9%A6%991.JPG" alt="香港1"><div class="masonry-label">🇭🇰 香港 · 2024.01</div></div>
-    </div>
-    <p class="photo-caption" style="margin-top:1.5rem;">在行走中发现自己。</p>
-  </div>
-</div>
-
 <!-- ══ SCRIPT ══ -->
 <script>
-const wrap = document.getElementById('scroll-wrap');
-const screens = ['profile','about','tabs'];
+// ── 屏幕顺序 ──
+const SCREENS = ['profile', 'about', 'tabs', 'thinking', 'tmi'];
+let _cur = 0;
+let _busy = false;
 
-/* ── scroll to screen ── */
-function goToScreen(id) {
-  const el = document.getElementById('screen-' + id);
-  if (!el) return;
-  wrap.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
+// ── 导航 tab 高亮 ──
+const NAV_MAP = { profile:'ntab-profile', about:'ntab-about', tabs:'ntab-work', thinking:'ntab-work', tmi:'ntab-tmi' };
+function updateNav(id) {
+  ['ntab-profile','ntab-about','ntab-work','ntab-tmi'].forEach(n => {
+    document.getElementById(n)?.classList.remove('active');
+  });
+  const t = NAV_MAP[id];
+  if (t) document.getElementById(t)?.classList.add('active');
 }
+
+// ── 触发当前屏的入场元素动画 ──
+function triggerScreenAnim(el) {
+  el.querySelectorAll('.fade-up').forEach(e => e.classList.add('in'));
+  el.querySelectorAll('.sr:not(.sr-in)').forEach((e, i) => {
+    setTimeout(() => e.classList.add('sr-in'), 80 + i * 70);
+  });
+  // 项目卡片：切换到 Work 页时错峰触发
+  el.querySelectorAll('.pcard:not(.sr-in)').forEach((e, i) => {
+    setTimeout(() => {
+      e.style.transitionDelay = '0s'; // 清除之前可能设的延迟
+      e.classList.add('sr-in');
+    }, 100 + i * 90);
+  });
+}
+
+// ── 核心：fade + 上移切换 ──
+function goToScreen(id) {
+  if (_busy) return;
+  const idx = SCREENS.indexOf(id);
+  if (idx === -1 || idx === _cur) return;
+  _busy = true;
+
+  const fromEl = document.getElementById('screen-' + SCREENS[_cur]);
+  const toEl   = document.getElementById('screen-' + id);
+
+  // 旧屏：移除 active，加 leaving（淡出上移）
+  fromEl.classList.remove('screen-active');
+  fromEl.classList.add('screen-leaving');
+
+  // 新屏：从下方淡入
+  toEl.classList.add('screen-entering');
+
+  // 双帧后切换到 active（触发 transition）
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      toEl.classList.remove('screen-entering');
+      toEl.classList.add('screen-active');
+    });
+  });
+
+  // 动画结束后清理
+  const DURATION = 450;
+  setTimeout(() => {
+    fromEl.classList.remove('screen-leaving');
+
+    _cur = idx;
+    updateNav(id);
+    triggerScreenAnim(toEl);
+
+    // About 页重置滚动位置
+    const resume = toEl.querySelector('.about-resume');
+    if (resume) resume.scrollTop = 0;
+
+    _busy = false;
+  }, DURATION);
+}
+
+function goToScreenWithCurtain(id) { goToScreen(id); }
 function scrollToAbout() { goToScreen('about'); }
 
-/* ── update nav on scroll ── */
-wrap.addEventListener('scroll', () => {
-  const sy = wrap.scrollTop;
-  const wh = wrap.clientHeight;
-  let cur = 'profile';
-  if (sy + 80 >= document.getElementById('screen-about').offsetTop) cur = 'about';
-  if (sy + 80 >= document.getElementById('screen-tabs').offsetTop)  cur = 'tabs';
+// ── 滚轮检测：About 页滚到底才触发翻页 ──
+let _wheelAcc = 0;
+let _wheelTimer = null;
 
-  // outer nav: profile / about
-  ['profile','about'].forEach(id => {
-    document.getElementById('ntab-' + id)?.classList.toggle('active', cur === id);
-  });
-  // Work / Life tabs — active when on tabs screen
-  const onTabs = cur === 'tabs';
-  const activeInner = document.querySelector('.inner-tab.active')?.id;
-  document.getElementById('ntab-work')?.classList.toggle('active', onTabs && activeInner === 'itab-work');
-  document.getElementById('ntab-life')?.classList.toggle('active', onTabs && activeInner === 'itab-life');
+function canGoNext() {
+  // 如果当前是 about 页，检查右侧是否滚到底
+  if (SCREENS[_cur] === 'about') {
+    const resume = document.querySelector('.about-resume');
+    if (resume) {
+      const atBottom = resume.scrollHeight - resume.scrollTop - resume.clientHeight < 8;
+      return atBottom;
+    }
+  }
+  return true;
+}
 
-  // fade-up trigger for about screen
-  if (cur === 'about') {
-    document.querySelectorAll('#screen-about .fade-up').forEach(el => el.classList.add('in'));
+function canGoPrev() {
+  // 如果当前是 about 页，检查右侧是否滚到顶
+  if (SCREENS[_cur] === 'about') {
+    const resume = document.querySelector('.about-resume');
+    if (resume) return resume.scrollTop < 8;
   }
-  // fade-up for profile
-  if (cur === 'profile') {
-    document.querySelectorAll('#screen-profile .fade-up').forEach(el => el.classList.add('in'));
+  return true;
+}
+
+window.addEventListener('wheel', (e) => {
+  // About 页：优先让内部滚动
+  if (SCREENS[_cur] === 'about') {
+    const resume = document.querySelector('.about-resume');
+    if (resume) {
+      const goingDown = e.deltaY > 0;
+      const atBottom = resume.scrollHeight - resume.scrollTop - resume.clientHeight < 8;
+      const atTop = resume.scrollTop < 8;
+      // 还没到底/顶，不拦截，让浏览器正常滚动
+      if ((goingDown && !atBottom) || (!goingDown && !atTop)) return;
+    }
   }
+  e.preventDefault();
+  _wheelAcc += e.deltaY;
+  clearTimeout(_wheelTimer);
+  _wheelTimer = setTimeout(() => {
+    if (Math.abs(_wheelAcc) < 25) { _wheelAcc = 0; return; }
+    if (_wheelAcc > 0 && _cur < SCREENS.length - 1 && canGoNext()) {
+      goToScreen(SCREENS[_cur + 1]);
+    } else if (_wheelAcc < 0 && _cur > 0 && canGoPrev()) {
+      goToScreen(SCREENS[_cur - 1]);
+    }
+    _wheelAcc = 0;
+  }, 60);
+}, { passive: false });
+
+// ── touch 支持 ──
+let _touchY = 0;
+window.addEventListener('touchstart', e => { _touchY = e.touches[0].clientY; }, { passive: true });
+window.addEventListener('touchend', e => {
+  const dy = _touchY - e.changedTouches[0].clientY;
+  if (Math.abs(dy) < 40) return;
+  if (dy > 0 && _cur < SCREENS.length - 1) goToScreen(SCREENS[_cur + 1]);
+  if (dy < 0 && _cur > 0) goToScreen(SCREENS[_cur - 1]);
 }, { passive: true });
 
-/* trigger profile fades on load */
-setTimeout(() => {
-  document.querySelectorAll('#screen-profile .fade-up').forEach(el => el.classList.add('in'));
-}, 100);
-
-/* ── inner tab switch ── */
-function setTab(id) {
-  document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('itab-' + id).classList.add('active');
-  document.getElementById('panel-' + id).classList.add('active');
-  // update outer nav
-  document.getElementById('ntab-work')?.classList.toggle('active', id === 'work');
-  document.getElementById('ntab-life')?.classList.toggle('active', id === 'life');
-  // navigate to tabs screen
-  goToScreen('tabs');
-}
-
-/* ── life detail overlays ── */
-function openLife(key) {
-  document.querySelectorAll('.life-detail').forEach(d => d.classList.remove('open'));
-  document.getElementById('life-' + key).classList.add('open');
-  if (key === 'photography') initGallery();
-}
-function closeLife(key) {
-  document.getElementById('life-' + key).classList.remove('open');
-}
-
-/* ── Photography Gallery ── */
-const PHOTOS = [
-  { src: null, title: '摄影作品 01', sub: '点击右侧缩略图切换' },
-  { src: null, title: '摄影作品 02', sub: '光线与构图的瞬间' },
-  { src: null, title: '摄影作品 03', sub: '每一帧都是一个问题' },
-  { src: null, title: '摄影作品 04', sub: '真正地观察世界' },
-  { src: null, title: '摄影作品 05', sub: '你真的看见了吗' },
-  { src: null, title: '摄影作品 06', sub: '按下快门的那一秒' },
-];
-const EMOJIS = ['🌸','🏛','🌿','🌊','🌙','✨'];
-let currentPhoto = 0;
-
-function initGallery() {
-  const rail = document.getElementById('gallery-rail');
-  if (rail.children.length > 0) return;
-  PHOTOS.forEach((p, i) => {
-    const thumb = document.createElement('div');
-    thumb.className = 'gallery-thumb' + (i === 0 ? ' active' : '');
-    thumb.innerHTML = p.src
-      ? `<img src="${p.src}" alt="${p.title}">`
-      : `<span style="font-size:1.6rem;opacity:0.3;">${EMOJIS[i]}</span>`;
-    thumb.onclick = () => selectPhoto(i);
-    rail.appendChild(thumb);
-  });
-  renderMain(0);
-}
-
-function selectPhoto(i) {
-  currentPhoto = i;
-  document.querySelectorAll('.gallery-thumb').forEach((t, idx) =>
-    t.classList.toggle('active', idx === i));
-  renderMain(i);
-}
-
-function renderMain(i) {
-  const inner = document.getElementById('gallery-main-inner');
-  inner.classList.add('fade');
+// ── 初始化 ──
+(function init() {
+  // 第一屏设为 active，其余默认 opacity:0 / visibility:hidden
+  const first = document.getElementById('screen-profile');
+  first.classList.add('screen-active');
+  updateNav('profile');
   setTimeout(() => {
-    const p = PHOTOS[i];
-    inner.innerHTML = p.src
-      ? `<img src="${p.src}" alt="${p.title}">`
-      : `<span style="font-size:6rem;opacity:0.08;">${EMOJIS[i]}</span>`;
-    document.getElementById('gallery-cap-title').textContent = p.title;
-    document.getElementById('gallery-cap-sub').textContent = p.sub;
-    document.getElementById('gallery-counter').textContent =
-      String(i+1).padStart(2,'0') + ' / ' + String(PHOTOS.length).padStart(2,'0');
-    inner.classList.remove('fade');
-  }, 280);
-}
+    triggerScreenAnim(first);
+  }, 100);
+})();
 
-document.addEventListener('keydown', e => {
-  const det = document.getElementById('life-photography');
-  if (!det.classList.contains('open')) return;
-  if (e.key === 'ArrowRight') selectPhoto((currentPhoto + 1) % PHOTOS.length);
-  if (e.key === 'ArrowLeft')  selectPhoto((currentPhoto - 1 + PHOTOS.length) % PHOTOS.length);
-  if (e.key === 'Escape') closeLife('photography');
-});
-</script>
-<div id="lightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
-  <img id="lightbox-img" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px;">
-</div>
-<script>
-document.querySelectorAll('.masonry-item img').forEach(img => {
-  img.style.cursor = 'zoom-in';
-  img.addEventListener('click', function(e) {
-    e.stopPropagation();
-    const lb = document.getElementById('lightbox');
-    document.getElementById('lightbox-img').src = this.src;
-    lb.style.display = 'flex';
+// work-view-item 的入场已由 triggerScreenAnim 里的 .sr 机制统一处理
+
+/* 全局 Scroll Reveal —— 已改为在 triggerScreenAnim 中直接触发，无需 observer */
+
+/* Accordion 展开/折叠 */
+function toggleAcc(id) {
+  const item = document.getElementById(id);
+  if (!item) return;
+  const isOpen = item.classList.contains('open');
+
+  // 关闭其他已展开的项
+  document.querySelectorAll('.acc-item.open').forEach(el => {
+    el.classList.remove('open');
+    const btn = el.querySelector('.acc-trigger');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
   });
-});
+
+  // 切换当前项
+  if (!isOpen) {
+    item.classList.add('open');
+    const btn = item.querySelector('.acc-trigger');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+  }
+}
 </script>
 </body>
 </html>
