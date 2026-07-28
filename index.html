@@ -128,8 +128,11 @@ body {
 }
 /* inline 变体（About 底部按钮，position:static） */
 .screen-next-btn--inline {
-  position: static;
+  position: absolute;
+  bottom: 2rem;
+  right: 3rem;
   transform: none;
+  z-index: 10;
 }
 .screen-next-btn-label {
   font-size: 0.72rem;
@@ -262,6 +265,7 @@ body {
   grid-template-columns: 26% 1fr;
   padding-top: 56px;
   overflow: hidden;
+  position: relative;
 }
 
 /* LEFT photo */
